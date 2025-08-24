@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 const WS_URL = 'ws://localhost:8080';
 
 function App() {
-	const [ws, setWs] = useState(null);
+	const wsRef = useRef(null);
 	const [connected, setConnected] = useState(false);
 	const [messages, setMessages] = useState([]);
 	const [input, setInput] = useState('');
@@ -15,15 +15,29 @@ function App() {
 	useEffect(() => {
 		connectWS();
 		return () => {
-			if (ws) ws.close();
+			if (wsRef.current) {
+				wsRef.current.onopen = null;
+				wsRef.current.onmessage = null;
+				wsRef.current.onclose = null;
+				wsRef.current.onerror = null;
+				wsRef.current.close();
+			}
 			if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
 		};
 		// eslint-disable-next-line
 	}, []);
 
 	const connectWS = () => {
+		// Close previous socket if exists
+		if (wsRef.current) {
+			wsRef.current.onopen = null;
+			wsRef.current.onmessage = null;
+			wsRef.current.onclose = null;
+			wsRef.current.onerror = null;
+			wsRef.current.close();
+		}
 		const socket = new window.WebSocket(WS_URL);
-		setWs(socket);
+		wsRef.current = socket;
 
 		socket.onopen = () => {
 			setConnected(true);
@@ -53,8 +67,8 @@ function App() {
 	};
 
 	const sendMessage = () => {
-		if (ws && connected && input.trim()) {
-			ws.send(JSON.stringify({ username, message: input }));
+		if (wsRef.current && connected && input.trim()) {
+			wsRef.current.send(JSON.stringify({ username, message: input }));
 			setInput('');
 		}
 	};
