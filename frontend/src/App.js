@@ -98,7 +98,29 @@ function App() {
 
 	const toggleDarkMode = () => {
 		setDarkMode(!darkMode);
+		updateFavicon(!darkMode);
 	};
+
+	const updateFavicon = (isDark) => {
+		const favicon = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+		if (favicon) {
+			const svgContent = `
+				<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="2" y="3" width="10" height="7" rx="3" fill="${isDark ? '#E6E1E5' : 'white'}"/>
+					<path d="M3 10 L3 12 L5 10 Z" fill="${isDark ? '#E6E1E5' : 'white'}"/>
+					<circle cx="5" cy="6.5" r="0.75" fill="${isDark ? '#D0BCFF' : '#6750A4'}"/>
+					<circle cx="8" cy="6.5" r="0.75" fill="${isDark ? '#D0BCFF' : '#6750A4'}"/>
+					<circle cx="11" cy="6.5" r="0.75" fill="${isDark ? '#D0BCFF' : '#6750A4'}"/>
+				</svg>
+			`;
+			favicon.href = 'data:image/svg+xml;base64,' + btoa(svgContent);
+		}
+	};
+
+	// Update favicon on initial load
+	useEffect(() => {
+		updateFavicon(darkMode);
+	}, [darkMode]);
 
 	const toggleEmojiPicker = () => {
 		setShowEmojiPicker(!showEmojiPicker);
