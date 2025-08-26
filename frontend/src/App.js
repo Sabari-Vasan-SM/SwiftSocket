@@ -11,6 +11,7 @@ function App() {
 	const [nameSet, setNameSet] = useState(false);
 	const [reconnectAttempts, setReconnectAttempts] = useState(0);
 	const [darkMode, setDarkMode] = useState(false);
+	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 	const reconnectTimeout = useRef(null);
 
 	useEffect(() => {
@@ -27,6 +28,20 @@ function App() {
 		};
 		// eslint-disable-next-line
 	}, []);
+
+	// Close emoji picker when clicking outside
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (showEmojiPicker && !event.target.closest('.emoji-container')) {
+				setShowEmojiPicker(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [showEmojiPicker]);
 
 	const connectWS = () => {
 		// Close previous socket if exists
@@ -84,6 +99,23 @@ function App() {
 	const toggleDarkMode = () => {
 		setDarkMode(!darkMode);
 	};
+
+	const toggleEmojiPicker = () => {
+		setShowEmojiPicker(!showEmojiPicker);
+	};
+
+	const addEmoji = (emoji) => {
+		setInput(prev => prev + emoji);
+		setShowEmojiPicker(false);
+	};
+
+	// Common emojis for the picker
+	const emojis = [
+		'😀', '😂', '😊', '😍', '🤔', '😎', '😭', '😡', '👍', '👎',
+		'❤️', '💔', '😘', '😜', '🤗', '😴', '🤯', '😇', '😈', '🤪',
+		'🔥', '💯', '✨', '⭐', '🎉', '🎊', '🙌', '👏', '💪', '🤝',
+		'🌟', '⚡', '💎', '🏆', '🎯', '🚀', '💡', '🎵', '🎈', '🎁'
+	];
 
 	const theme = {
 		light: {
@@ -436,38 +468,131 @@ function App() {
 						{/* Input area */}
 						<div style={{ 
 							display: 'flex', 
-							gap: '12px',
-							flexDirection: window.innerWidth < 480 ? 'column' : 'row'
+							gap: '8px',
+							flexDirection: window.innerWidth < 480 ? 'column' : 'row',
+							position: 'relative'
 						}}>
-							<input
-								type="text"
-								value={input}
-								onChange={handleInput}
-								placeholder="Type a message..."
-								style={{
-									flex: 1,
-									padding: '16px 20px',
-									borderRadius: '20px',
-									border: `2px solid ${currentTheme.outline}`,
-									backgroundColor: currentTheme.surface,
-									color: currentTheme.onSurface,
-									fontSize: '16px',
-									outline: 'none',
-									transition: 'all 0.2s ease',
-									fontFamily: 'inherit',
-									minHeight: '24px'
-								}}
-								onKeyDown={e => e.key === 'Enter' && sendMessage()}
-								disabled={!connected}
-								onFocus={e => {
-									e.target.style.borderColor = currentTheme.primary;
-									e.target.style.backgroundColor = currentTheme.surfaceVariant;
-								}}
-								onBlur={e => {
-									e.target.style.borderColor = currentTheme.outline;
-									e.target.style.backgroundColor = currentTheme.surface;
-								}}
-							/>
+							<div style={{
+								flex: 1,
+								position: 'relative',
+								display: 'flex',
+								alignItems: 'center'
+							}} className="emoji-container">
+								<input
+									type="text"
+									value={input}
+									onChange={handleInput}
+									placeholder="Type a message..."
+									style={{
+										width: '100%',
+										padding: '16px 52px 16px 20px',
+										borderRadius: '20px',
+										border: `2px solid ${currentTheme.outline}`,
+										backgroundColor: currentTheme.surface,
+										color: currentTheme.onSurface,
+										fontSize: '16px',
+										outline: 'none',
+										transition: 'all 0.2s ease',
+										fontFamily: 'inherit',
+										minHeight: '24px'
+									}}
+									onKeyDown={e => e.key === 'Enter' && sendMessage()}
+									disabled={!connected}
+									onFocus={e => {
+										e.target.style.borderColor = currentTheme.primary;
+										e.target.style.backgroundColor = currentTheme.surfaceVariant;
+									}}
+									onBlur={e => {
+										e.target.style.borderColor = currentTheme.outline;
+										e.target.style.backgroundColor = currentTheme.surface;
+									}}
+								/>
+								{/* Emoji button */}
+								<button
+									onClick={toggleEmojiPicker}
+									style={{
+										position: 'absolute',
+										right: '8px',
+										width: '36px',
+										height: '36px',
+										borderRadius: '18px',
+										border: 'none',
+										backgroundColor: showEmojiPicker ? currentTheme.primaryContainer : 'transparent',
+										color: showEmojiPicker ? currentTheme.onPrimaryContainer : currentTheme.onSurfaceVariant,
+										cursor: 'pointer',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										fontSize: '18px',
+										transition: 'all 0.2s ease',
+										outline: 'none'
+									}}
+									onMouseEnter={e => {
+										if (!showEmojiPicker) {
+											e.target.style.backgroundColor = currentTheme.surfaceVariant;
+										}
+									}}
+									onMouseLeave={e => {
+										if (!showEmojiPicker) {
+											e.target.style.backgroundColor = 'transparent';
+										}
+									}}
+								>
+									😊
+								</button>
+								
+								{/* Emoji Picker */}
+								{showEmojiPicker && (
+									<div style={{
+										position: 'absolute',
+										bottom: '100%',
+										right: '0',
+										marginBottom: '8px',
+										backgroundColor: currentTheme.surface,
+										border: `1px solid ${currentTheme.outlineVariant}`,
+										borderRadius: '16px',
+										padding: '16px',
+										boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+										zIndex: 1000,
+										display: 'grid',
+										gridTemplateColumns: 'repeat(8, 1fr)',
+										gap: '8px',
+										maxWidth: '320px',
+										animation: 'fadeIn 0.2s ease-out'
+									}}>
+										{emojis.map((emoji, index) => (
+											<button
+												key={index}
+												onClick={() => addEmoji(emoji)}
+												style={{
+													width: '32px',
+													height: '32px',
+													border: 'none',
+													backgroundColor: 'transparent',
+													borderRadius: '8px',
+													cursor: 'pointer',
+													fontSize: '18px',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													transition: 'all 0.2s ease',
+													outline: 'none'
+												}}
+												onMouseEnter={e => {
+													e.target.style.backgroundColor = currentTheme.surfaceVariant;
+													e.target.style.transform = 'scale(1.2)';
+												}}
+												onMouseLeave={e => {
+													e.target.style.backgroundColor = 'transparent';
+													e.target.style.transform = 'scale(1)';
+												}}
+											>
+												{emoji}
+											</button>
+										))}
+									</div>
+								)}
+							</div>
 							<button
 								onClick={sendMessage}
 								disabled={!connected || !input.trim()}

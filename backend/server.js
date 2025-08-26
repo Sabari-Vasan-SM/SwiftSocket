@@ -15,9 +15,14 @@ wss.on('connection', (ws) => {
 
     ws.on('message', (data) => {
         try {
-            const msg = JSON.parse(data);
+            // Ensure proper UTF-8 handling for emojis
+            const msg = JSON.parse(data.toString('utf8'));
             console.log('Received:', msg);
-            broadcast({ type: 'chat', ...msg });
+            
+            // Basic validation
+            if (msg.message && msg.message.trim()) {
+                broadcast({ type: 'chat', ...msg });
+            }
         } catch (e) {
             console.error('Error parsing message:', e);
         }
